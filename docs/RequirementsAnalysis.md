@@ -40,7 +40,7 @@
 - pytest（テスト）
 - python-dotenv（設定管理、必要に応じて）
 
-## ディレクトリ構成（例）
+## ディレクトリ構成
 ```
 lab-instruments/
 ├── core/           # コア機能（通信・共通SCPI・出力）
