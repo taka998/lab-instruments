@@ -1,7 +1,8 @@
+from .connection import ConnectionInterface
 import socket
 from typing import Optional
 
-class SocketConnection:
+class SocketConnection(ConnectionInterface):
     def __init__(self, host: str, port: int, timeout: float = 1.0):
         self.host = host
         self.port = port
@@ -37,9 +38,9 @@ class SocketConnection:
             data += chunk
         return data.decode(errors='ignore').strip()
 
-    def query(self, command: str) -> str:
+    def query(self, command: str):
         self.write(command)
         return self.read()
 
-    def is_connected(self) -> bool:
+    def is_connected(self):
         return self.sock is not None

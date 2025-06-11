@@ -1,5 +1,7 @@
-class SCPICommon:
-    def __init__(self, connection):
+from core.interfaces import ConnectionInterface
+
+class CommonSCPI:
+    def __init__(self, connection: ConnectionInterface):
         self.conn = connection
 
     def idn(self):

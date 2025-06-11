@@ -1,8 +1,9 @@
+from .connection import ConnectionInterface
 import serial
 from typing import Optional
 
 
-class SerialConnection:
+class SerialConnection(ConnectionInterface):
     def __init__(self, port, baudrate=9600, timeout=1):
         self.port = port
         self.baudrate = baudrate
