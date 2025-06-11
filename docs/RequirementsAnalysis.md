@@ -59,37 +59,10 @@ lab-instruments/
 
 （本ファイルは今後の設計・実装・レビューの指針とする）
 
----
+## Advanced（発展要件）
 
-## core/serial.py 設計詳細
-
-- 目的：シリアル通信（RS232/RS485等）による機器接続・SCPIコマンド送受信のためのクラスを提供
-- 使用ライブラリ：pyserial
-
-### クラス: SerialConnection
-- `__init__(self, port, baudrate=9600, timeout=1)`
-    - ポート名、ボーレート、タイムアウトを指定して初期化
-- `connect(self)`
-    - シリアルポートへ接続
-- `disconnect(self)`
-    - シリアルポートを切断
-- `write(self, command)`
-    - コマンドを送信（末尾に\n自動付与）
-- `read(self)`
-    - 1行受信しデコードして返す
-- `query(self, command)`
-    - コマンド送信→応答受信を1ステップで実行
-- `is_connected(self)`
-    - 接続状態をboolで返す
-
-#### 使い方例
-```python
-conn = SerialConnection('/dev/ttyUSB0', baudrate=19200)
-conn.connect()
-conn.write('*IDN?')
-response = conn.read()
-conn.disconnect()
-```
-
----
-
+- 機器自動検出・自動接続機能  
+  - 複数の通信方式（シリアル・ソケット等）を順次試行し、*IDN?応答から機器を自動判別  
+  - 機器ごとの推奨通信方式・デフォルトパラメータをプラグイン側で管理  
+  - 機器判別後、対応するラッパークラスを自動ロード・インスタンス化  
+  `inst = auto_connect()`
