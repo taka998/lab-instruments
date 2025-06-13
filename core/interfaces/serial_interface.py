@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class SerialConnection(ConnectionInterface):
-    def __init__(self, port, baudrate=9600, timeout=1):
+    def __init__(self, port: str = "/dev/ttyACM0", baudrate: int = 9600, timeout: float = 1.0):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -12,7 +12,7 @@ class SerialConnection(ConnectionInterface):
 
     def connect(self):
         if self.ser is not None and self.ser.is_open:
-            return  # Already connected
+            return
         try:
             self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
         except serial.SerialException as e:

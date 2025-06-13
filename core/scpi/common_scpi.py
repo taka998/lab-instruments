@@ -1,3 +1,4 @@
+import time
 from core.interfaces import ConnectionInterface
 
 class CommonSCPI:
@@ -80,10 +81,87 @@ class CommonSCPI:
         """*WAI Wait-to-continue"""
         self.conn.write("*WAI")
 
-    def send(self, command):
-        """Send arbitrary SCPI command"""
+    def send(self, command, safe=True, timeout=5.0, interval=0.1):
+        """
+        Send a SCPI command. If safe=True, monitors completion and errors using *OPC and *ESR?.
+        """
         self.conn.write(command)
+        if not safe:
+            return
+        self.conn.write("*OPC")
+        start = time.time()
+        while True:
+            esr_str = self.conn.query("*ESR?")
+            try:
+                esr = int(esr_str)
+            except Exception:
+                raise SCPIError(-1, f"Failed to parse ESR value: '{esr_str}'")
+            if esr & 0b10:  # Operation Complete (bit 1)
+                if esr & ~0b10:
+                    raise SCPIError(esr)
+                break
+            if timeout != 0.0:
+                if time.time() - start > timeout:
+                    raise TimeoutError("SCPI command did not complete in time (OPC/ESR)")
+            time.sleep(interval)
 
-    def query(self, command):
-        """Send arbitrary SCPI command and read response"""
-        return self.conn.query(command)
+    def query(self, command, safe=True, timeout=5.0, interval=0.1):
+        """
+        Send a SCPI query command and get the response. If safe=True, monitors completion and errors using *OPC and *ESR?.
+        """
+        response = self.conn.query(command)
+        if not safe:
+            return
+        self.conn.write("*OPC")
+        start = time.time()
+        while True:
+            esr_str = self.conn.query("*ESR?")
+            try:
+                esr = int(esr_str)
+            except Exception:
+                raise SCPIError(-1, f"Failed to parse ESR value: '{esr_str}'")
+            if esr & 0b10:  # Operation Complete (bit 1)
+                if esr & ~0b10:
+                    raise SCPIError(esr)
+                break
+            if timeout != 0.0:
+                if time.time() - start > timeout:
+                    raise TimeoutError("SCPI command did not complete in time (OPC/ESR)")
+            time.sleep(interval)
+        return response
+
+class SCPIError(Exception):
+    """
+    Exception for SCPI errors, decoding ESR value into human-readable messages.
+    """
+    ESR_MEANINGS = [
+        "Operation Complete",      # bit 0 (1)
+        "Request Control",         # bit 1 (2)
+        "Query Error",             # bit 2 (4)
+        "Device Dependent Error",  # bit 3 (8)
+        "Execution Error",         # bit 4 (16)
+        "Command Error",           # bit 5 (32)
+        "User Request",            # bit 6 (64)
+        "Power On"                 # bit 7 (128)
+    ]
+
+    def __init__(self, esr_value, message=None):
+        self.esr_value = esr_value
+        self.flags = self.decode_esr(esr_value)
+        msg = message or self.format_message(esr_value, self.flags)
+        super().__init__(msg)
+
+    @classmethod
+    def decode_esr(cls, esr_value):
+        """Return a list of ESR flag meanings for the given value."""
+        flags = []
+        for i, name in enumerate(cls.ESR_MEANINGS):
+            if (esr_value >> i) & 1:
+                flags.append(name)
+        return flags
+
+    @staticmethod
+    def format_message(esr_value, flags):
+        if not flags:
+            return f"SCPI Error: ESR={esr_value} (No error flags set)"
+        return f"SCPI Error: ESR={esr_value} (Flags: {', '.join(flags)})"
