@@ -1,6 +1,13 @@
 from abc import ABC, abstractmethod
 
 class ConnectionInterface(ABC):
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
+
     @abstractmethod
     def connect(self) -> None:
         pass
@@ -24,3 +31,18 @@ class ConnectionInterface(ABC):
     @abstractmethod
     def is_connected(self) -> bool:
         pass
+
+class ConnectionError(Exception):
+    pass
+
+class ConnectionClosedError(ConnectionError):
+    pass
+
+class ConnectionTimeoutError(ConnectionError):
+    pass
+
+class ConnectionIOError(ConnectionError):
+    pass
+
+class ConnectionProtocolError(ConnectionError):
+    pass
