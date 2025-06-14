@@ -29,9 +29,9 @@ def connect(dev=None, method=None, plugins_dir="plugins", **kwargs):
         # Import SCPI wrapper class dynamically
         try:
             module = importlib.import_module(f'{dev}.{dev}_scpi')
-            SCPIClass = getattr(module, config['scpi_class'])
+            SCPIClass = getattr(module, f"{dev.upper()}SCPI")
         except (ModuleNotFoundError, AttributeError):
-            raise ImportError(f'SCPI class for {dev} not found in {plugins_dir}.')
+            raise ImportError(f'SCPI class \"{dev.upper()}SCPI\" for {dev} not found in {plugins_dir}.')
 
         comm_method = (method or config.get('method', '')).lower()
         if comm_method == 'serial':

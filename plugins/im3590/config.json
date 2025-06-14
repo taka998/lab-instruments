@@ -1,5 +1,4 @@
 {
-  "scpi_class": "IM3590SCPI",
   "method": "serial",
   "serial_params": {
     "port": "/dev/ttyACM0",
