@@ -4,12 +4,12 @@
     "port": "/dev/ttyACM0",
     "baudrate": 9600,
     "timeout": 1.0,
-    "terminator": "\r\n"
+    "terminator": "CRLF"
   },
   "socket_params": {
     "host": "192.168.0.10",
     "port": 3590,
     "timeout": 1.0,
-    "terminator": "\r\n"
+    "terminator": "CRLF"
   }
 }
