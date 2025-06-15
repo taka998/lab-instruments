@@ -108,10 +108,10 @@ plugins/
 
 ```python
 from core.factory import connect
-with connect(dev="im3590", method="serial", port="/dev/ttyACM0") as s:
-    s.idn()
-    s.set_freaq(1000)
-    s.measure()
+with connect(dev="im3590", method="serial", port="/dev/ttyACM0") as ins:
+    ins.idn()
+    ins.set_freaq(1000)
+    ins.measure()
 ```
 
 ---

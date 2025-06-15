@@ -72,6 +72,6 @@ def connect(dev=None, method=None, plugins_dir="plugins", **kwargs):
         return SCPIClass(conn)
     else:
         comm_method = (method or '').lower()
-        if comm_method not in ('serial', 'socket'):
-            raise ValueError('When dev is not specified, method must be "serial" or "socket".')
+        if comm_method not in ('serial', 'socket', 'visa'):
+            raise ValueError('When dev is not specified, method must be "serial" or "socket" or "visa".')
         return create_connection(method, None, kwargs)
