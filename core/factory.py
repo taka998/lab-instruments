@@ -46,6 +46,12 @@ def create_connection(method, config=None, kwargs=None):
         if 'terminator' in params:
             params['terminator'] = parse_terminator(params['terminator'])
         return SocketConnection(**params)
+    elif comm_method == 'visa':
+        from core.interfaces.visa_interface import VisaConnection
+        params = {**(config.get('visa_params', {}) if config else {}), **(kwargs or {})}
+        if 'terminator' in params:
+            params['terminator'] = parse_terminator(params['terminator'])
+        return VisaConnection(**params)
     else:
         raise ValueError(f'Unknown method: {comm_method}')
 

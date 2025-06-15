@@ -1,0 +1,8 @@
+{
+  "method": "serial",
+  "serial_params": {
+    "port": "/dev/ttyUSB0",
+    "baudrate": 9600,
+    "timeout": 1.0,
+    "terminator": "CRLF"
+  },
