@@ -54,7 +54,7 @@
 lab-instruments/
 ├── core/           # コア機能（通信・共通SCPI・出力）
 ├── plugins/        # 機器ごとのラッパー
-├── scripts/        # 測定自動化スクリプト
+├── scripts/        # 雑多スクリプト
 ├── docs/           # ドキュメント
 └── ...             # その他管理ファイル
 ```
@@ -110,18 +110,10 @@ plugins/
 from core.factory import connect
 with connect(dev="im3590", method="serial", port="/dev/ttyACM0") as ins:
     ins.idn()
-    ins.set_freaq(1000)
+    ins.set_freq(1000)
     ins.measure()
 ```
 
 ---
 
 （本ファイルは今後の設計・実装・レビューの指針とする）
-
-## Advanced（発展要件）
-
-- 機器自動検出・自動接続機能
-  - 複数の通信方式（シリアル・ソケット等）を順次試行し、\*IDN?応答から機器を自動判別
-  - 機器ごとの推奨通信方式・デフォルトパラメータをプラグイン側で管理
-  - 機器判別後、対応するラッパークラスを自動ロード・インスタンス化  
-    `inst = auto_connect()`
