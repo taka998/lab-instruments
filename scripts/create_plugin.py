@@ -43,6 +43,11 @@ def main():
     plugin_dir = os.path.join("plugins", name)
     os.makedirs(plugin_dir, exist_ok=True)
 
+    # Create __init__.py
+    init_path = os.path.join(plugin_dir, "__init__.py")
+    with open(init_path, "w") as f:
+        pass
+
     # Create SCPI wrapper
     scpi_path = os.path.join(plugin_dir, f"{name}_scpi.py")
     with open(scpi_path, "w") as f:
