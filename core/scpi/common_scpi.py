@@ -5,6 +5,13 @@ class CommonSCPI:
     def __init__(self, connection: ConnectionInterface):
         self.conn = connection
 
+    def __enter__(self):
+        self.conn.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.__exit__(exc_type, exc_val, exc_tb)
+
     def idn(self):
         """*IDN? Identification query"""
         return self.conn.query("*IDN?")
