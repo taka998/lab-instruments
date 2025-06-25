@@ -1,4 +1,4 @@
-from core.scpi.common_scpi import CommonSCPI
+from ...core.scpi.common_scpi import CommonSCPI
 
 class PLZ164WSCPI(CommonSCPI):
     def __init__(self, connection):

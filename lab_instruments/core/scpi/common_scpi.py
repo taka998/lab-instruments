@@ -1,5 +1,5 @@
 import time
-from core.interfaces import ConnectionInterface
+from ..interfaces import ConnectionInterface
 
 class CommonSCPI:
     def __init__(self, connection: ConnectionInterface):
