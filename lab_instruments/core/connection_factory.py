@@ -1,4 +1,3 @@
-
 def parse_terminator(val):
     if isinstance(val, str):
         table = {
