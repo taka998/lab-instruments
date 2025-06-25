@@ -1,6 +1,6 @@
 import argparse
-from core.factory import connect
-from core.scpi.common_scpi import CommonSCPI
+import lab_instruments
+from lab_instruments.core.scpi.common_scpi import CommonSCPI
 
 def main():
     parser = argparse.ArgumentParser(description="SCPI Shell CLI")
@@ -21,7 +21,7 @@ def main():
             kwargs[k] = v
 
     try:
-        scpi = connect(
+        scpi = lab_instruments.connect(
             dev=args.dev,
             method=args.method,
             plugins_dir=args.plugins_dir,

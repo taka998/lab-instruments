@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-PLUGIN_TEMPLATE = '''from core.scpi.common_scpi import CommonSCPI
+PLUGIN_TEMPLATE = '''from ...core.scpi.common_scpi import CommonSCPI
 
 class {class_name}(CommonSCPI):
     def __init__(self, connection):
@@ -40,7 +40,7 @@ def main():
             print("Plugin name is required.")
             sys.exit(1)
     class_name = f"{name.upper()}SCPI"
-    plugin_dir = os.path.join("plugins", name)
+    plugin_dir = os.path.join("lab_instruments", "plugins", name)
     os.makedirs(plugin_dir, exist_ok=True)
 
     # Create __init__.py
