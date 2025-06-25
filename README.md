@@ -1,78 +1,117 @@
-研究室向け計測機器自動制御・データ取得フレームワーク  
-（SCPI対応機器の統一制御・自動化・拡張プラグイン対応）
+# lab-instruments
 
-## 特徴
+# LCRメーター接続（自動型推論）
 
-- VISA/シリアル/ソケット通信による機器制御
-- SCPIコマンド送信・応答取得・エラーチェック
-- 機器ごとのプラグインラッパーで拡張容易
-- 測定データの取得・保存・ログ出力
-- 測定自動化スクリプト対応
+```python
+with lab_instruments.connect(dev="im3590") as lcr:
+print(lcr.idn())
+lcr.set_freq(1000)
+result = lcr.measure()
+print(f"測定結果: {result}")
+```
 
-## ディレクトリ構成例
+## 🔧 高度な使用法
 
-core/  
-　factory.py（ファクトリ関数）  
-　interfaces/（通信インターフェース）  
-　scpi/（共通SCPIラッパー）  
-plugins/  
-　IM3590/  
-　　im3590_scpi.py  
-　　config.json  
-examples/（使い方例）
-scripts/（プラグイン雛形生成）  
-docs/（ドキュメント）
+## 🔗 主な依存ライブラリ
 
-## インストール
+研究室向け計測機器制御ライブラリ - **統一API**でSCPI対応機器を簡単制御
 
-依存ライブラリ
+## ✨ 特徴
 
-- pyvisa
-- pyserial
+- **統一エントリポイント** - `lab_instruments.connect()` で全ての機器に対応
+- **完全な型安全性** - IDE補完・エラー検出サポート
+- **プラグイン自動検出** - 新機器は `plugins/` に追加するだけ
+- **複数通信方式** - VISA/シリアル/ソケット対応
+- **自動化対応** - スクリプト・測定シーケンス実行
+
+## 🚀 クイックスタート
+
+### インストール
 
 ```bash
 uv sync
 ```
 
-## 使い方
-
-ファクトリ関数 connect() で機器インスタンスを取得し、SCPIコマンドを実行できます。
+### 利用可能なデバイス確認
 
 ```python
-from core.factory import connect
-
-with connect(dev="im3590", method="serial", port="/dev/ttyACM0") as ins:
-    print(ins.idn())
-    ins.set_freaq(1000)
-    ins.measure()
+import lab_instruments
+print(lab_instruments.list_devices())
+# ['im3590', 'plz164w', ...]
 ```
 
-## プラグイン追加・拡張
+### 基本的な使い方
 
-### プラグイン雛形の自動生成
+```python
+import lab_instruments
+```
 
-プラグイン雛形はスクリプトで自動生成できます。
+### 新しいデバイスプラグインの追加
+
+## 📁 プロジェクト構成
+
+```
+lab-instruments/
+├── lab_instruments/     # メインパッケージ
+│   ├── factory.py      # 統一ファクトリ
+│   ├── registry.py     # プラグイン管理
+│   ├── core/          # 通信・SCPI基盤
+│   └── plugins/       # デバイスプラグイン
+│       ├── im3590/    # LCRメーター
+│       └── plz164w/   # 電子負荷
+├── examples/          # 使用例
+├── scripts/          # ユーティリティ
+└── docs/            # ドキュメント
+```
+
+### 接続設定のカスタマイズ
+
+```python
+# 接続パラメータの上書き
+with lab_instruments.connect(dev="im3590",
+                           port="/dev/ttyUSB1",
+                           baudrate=115200) as lcr:
+    # 測定処理
+    pass
+```
+
+### Raw接続（低レベル制御）
+
+```python
+with lab_instruments.connect(method="serial", port="/dev/ttyUSB0") as conn:
+    conn.write("*IDN?")
+    print(conn.read())
+```
+
+## 🛠️ 開発・拡張
 
 ```bash
-python plugins/scripts/create_plugin.py <機器名>
+python scripts/create_plugin.py <device_name>
 ```
 
-例: IM3590用の雛形作成
+### VISA アドレスの確認
 
 ```bash
-python plugins/scripts/create_plugin.py im3590
+python scripts/search_visa_address.py
 ```
 
-これにより plugins/im3590/ 配下に config.json と im3590_scpi.py が生成されます。
-
-### VISA address の特定
-
-You can list available VISA addresses using the following script:
+### SCPI 対話シェル（デバッグ用）
 
 ```bash
-python plugins/scripts/visa_address.py
+python scripts/scpi_shell.py
 ```
+
+## 📚 ドキュメント
+
+- **[要件分析](docs/RequirementsAnalysis.md)** - プロジェクト全体の設計思想・アーキテクチャ
+- **[使用例](examples/README.md)** - 実践的なコード例・サンプル
+- **[プラグイン開発ガイド](docs/PluginDevelopment.md)** - 新機器対応の追加方法
+- **[API リファレンス](docs/APIReference.md)** - 関数・クラスの詳細仕様
+- `pyvisa` - VISA通信
+- `pyserial` - シリアル通信
+- `numpy`, `pandas` - データ処理
+- `loguru` - ログ出力
 
 ---
 
-詳細は docs/RequirementsAnalysis.md を参照してください。
+**2024年リファクタリング完了** - 統一ファクトリパターン + 完全型安全対応
