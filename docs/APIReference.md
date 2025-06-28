@@ -98,7 +98,7 @@ sequenceDiagram
 
 ### 1. ファクトリ関数 (`factory.py`)
 
-#### `connect(dev=None, method=None, **kwargs)`
+#### `connect(dev=None, method=None, plugins_dir="lab_instruments/plugins", **kwargs)`
 
 統一接続関数 - すべての機器接続のエントリポイント
 
@@ -106,6 +106,7 @@ sequenceDiagram
 def connect(
     dev: Optional[str] = None,
     method: Optional[str] = None,
+    plugins_dir: str = "lab_instruments/plugins",
     **kwargs
 ) -> Union[CommonSCPI, ConnectionInterface]:
     """
@@ -114,6 +115,7 @@ def connect(
     Args:
         dev: デバイス名 (例: "im3590", "plz164w")
         method: 接続方式 ("serial", "visa", "socket")
+        plugins_dir: プラグインディレクトリパス（後方互換性のため保持）
         **kwargs: 接続パラメータのオーバーライド
 
     Returns:
@@ -122,7 +124,27 @@ def connect(
     Raises:
         ValueError: 指定されたデバイスまたは接続方式が見つからない場合
         ConnectionError: 機器との接続に失敗した場合
+
+    Note:
+        - dev指定時: レジストリからデバイス情報を取得し、型付きSCPIラッパーを返す
+        - method指定時: 指定された通信方式で生の接続インターフェースを返す
+        - plugins_dirパラメータは後方互換性のため保持されているが、内部的にはレジストリを使用
     """
+```
+
+#### 動的型付き接続関数
+
+モジュールは `__getattr__` を通じて、登録されたデバイスごとに型付き接続関数を動的生成します：
+
+```python
+# 動的に生成される関数（例）
+def connect_im3590(**kwargs) -> IM3590SCPI:
+    """IM3590 LCRメーターに接続"""
+    return connect(dev="im3590", **kwargs)
+
+def connect_plz164w(**kwargs) -> PLZ164WSCPI:
+    """PLZ164W 電子負荷装置に接続"""
+    return connect(dev="plz164w", **kwargs)
 ```
 
 **使用パターン:**
@@ -171,12 +193,15 @@ class DeviceRegistry:
     def __init__(self):
         self._devices: Dict[str, DeviceInfo] = {}
         self._plugins_dir: Optional[str] = None
+        self._discovery_stats: Dict[str, Any] = {}
 
     def register(
         self,
         name: str,
         device_class: Type[CommonSCPI],
-        config_path: str
+        config_path: str,
+        module_path: str = None,
+        plugin_path: str = None
     ) -> None:
         """デバイスを手動登録"""
 
@@ -204,6 +229,8 @@ class DeviceInfo:
     config_path: str
     config: Dict[str, Any]
     module_path: str
+    plugin_path: Optional[str] = None
+    discovered_at: Optional[datetime] = None
 ```
 
 ### 3. スタブ管理 (`stub_manager.py`)
@@ -382,8 +409,7 @@ class CommonSCPI:
     """SCPI機器の共通基底クラス"""
 
     def __init__(self, connection: ConnectionInterface):
-        self.connection = connection
-        self.logger = self._setup_logger()
+        self.conn = connection
 
     def idn(self) -> str:
         """機器識別情報を取得 (*IDN?)"""
@@ -391,14 +417,14 @@ class CommonSCPI:
 
     def reset(self) -> None:
         """機器をリセット (*RST)"""
+
         self.write("*RST")
-        self.wait_for_completion()
 
     def clear_status(self) -> None:
         """ステータスをクリア (*CLS)"""
         self.write("*CLS")
 
-    def wait_for_completion(self) -> None:
+    def ocp_query(self) -> None:
         """操作完了を待機 (*OPC?)"""
         self.query("*OPC?")
 
@@ -420,19 +446,48 @@ class CommonSCPI:
 
     def write(self, command: str) -> None:
         """SCPIコマンドを送信"""
-        self.logger.debug(f"WRITE: {command}")
-        self.connection.write(command)
+        self.conn.write(command)
 
     def read(self) -> str:
         """応答を読み取り"""
-        response = self.connection.read()
-        self.logger.debug(f"READ: {response}")
+        response = self.conn.read()
         return response
 
     def query(self, command: str) -> str:
-        """コマンド送信+応答読み取り"""
-        self.write(command)
-        return self.read()
+        return self.query(command)
+
+    def ssend(self, command: str, safe: bool = True, timeout: float = 5.0, interval: float = 0.1) -> None:
+        """
+        SCPIコマンドを送信（エラー監視機能付き）
+
+        Args:
+            command: SCPIコマンド文字列
+            safe: エラー監視を行うか（*OPC, *ESR?による完了・エラーチェック）
+            timeout: タイムアウト時間（秒）
+            interval: ポーリング間隔（秒）
+
+        Raises:
+            SCPIError: SCPIエラーが発生した場合
+            TimeoutError: タイムアウトした場合
+        """
+
+    def squery(self, command: str) -> str:
+        """
+        SCPIクエリを実行（エラー監視機能付き）
+
+        Args:
+            command: SCPIクエリコマンド文字列
+            safe: エラー監視を行うか
+            timeout: タイムアウト時間（秒）
+            interval: ポーリング間隔（秒）
+
+        Returns:
+            str: クエリ応答
+
+        Raises:
+            SCPIError: SCPIエラーが発生した場合
+            TimeoutError: タイムアウトした場合
+        """
 
     def __enter__(self):
         return self
@@ -459,20 +514,27 @@ lab_instruments/plugins/my_device/
 
 ```json
 {
-  "device_name": "my_device",
-  "connection": {
-    "method": "serial",
-    "port": "/dev/ttyUSB0",
+  "method": "serial",
+  "serial_params": {
+    "port": "/dev/ttyACM0",
     "baudrate": 9600,
     "timeout": 1.0,
-    "parity": "N",
-    "stopbits": 1,
-    "bytesize": 8
+    "terminator": "CRLF"
+  },
+  "socket_params": {
+    "host": "192.168.0.10",
+    "port": 3590,
+    "timeout": 1.0,
+    "terminator": "CRLF"
   },
   "metadata": {
-    "manufacturer": "Example Corp",
-    "model": "EX-1000",
-    "description": "Example measurement device"
+    "manufacturer": "Ex-Tech",
+    "model": "Ex-1000",
+    "description": "LCR Meter",
+    "version": "1.0",
+    "manual_url": "https://example.com",
+    "categories": ["LCR"],
+    "supported_interfaces": ["serial", "socket"]
   }
 }
 ```
@@ -489,27 +551,24 @@ class MY_DEVICESCPI(CommonSCPI):
 
     def __init__(self, connection):
         super().__init__(connection)
-        self.logger.info("MY_DEVICE SCPI wrapper initialized")
 
     def set_parameter(self, value: float) -> None:
         """パラメータを設定"""
         command = f"PARAM {value}"
-        self.write(command)
-        self.wait_for_completion()
+        self.ssend(command)
 
-    def get_parameter(self) -> float:
+    def get_parameter(self, idx) -> float:
         """パラメータを取得"""
-        response = self.query("PARAM?")
+        response = self.squery(f"PARameter{idx}")
         return float(response)
 
     def measure(self) -> Dict[str, float]:
         """測定実行"""
         # 測定開始
-        self.write("MEAS:START")
-        self.wait_for_completion()
+        self.ssend("MEAS:START")
 
         # 結果取得
-        data = self.query("MEAS:DATA?")
+        data = self.squery("MEAS:DATA?")
         values = data.split(',')
 
         return {
@@ -520,20 +579,11 @@ class MY_DEVICESCPI(CommonSCPI):
 
     def calibrate(self) -> bool:
         """キャリブレーション実行"""
-        self.write("CAL:START")
-
         # 完了待ち（時間がかかる場合）
-        import time
-        timeout = 30  # 30秒でタイムアウト
-        start_time = time.time()
-
-        while time.time() - start_time < timeout:
-            status = self.query("CAL:STAT?")
-            if status.strip() == "COMPLETE":
-                return True
-            time.sleep(1)
-
-        return False  # タイムアウト
+        try:
+            self.ssend("CAL:START", timeout=30, interval=0.5)
+        except:
+            return False  # タイムアウト
 ```
 
 ### プラグイン自動生成
@@ -542,68 +592,11 @@ class MY_DEVICESCPI(CommonSCPI):
 python scripts/create_plugin.py my_device
 ```
 
-自動生成されるテンプレート:
-
-```python
-# scripts/create_plugin.py
-def create_plugin_template(device_name: str):
-    """プラグインテンプレートを自動生成"""
-
-    plugin_dir = Path(f"lab_instruments/plugins/{device_name}")
-    plugin_dir.mkdir(parents=True, exist_ok=True)
-
-    # __init__.py
-    (plugin_dir / "__init__.py").write_text("")
-
-    # config.json
-    config = {
-        "device_name": device_name,
-        "connection": {
-            "method": "serial",
-            "port": "/dev/ttyUSB0",
-            "baudrate": 9600,
-            "timeout": 1.0
-        },
-        "metadata": {
-            "manufacturer": "Unknown",
-            "model": device_name.upper(),
-            "description": f"{device_name} measurement device"
-        }
-    }
-
-    with open(plugin_dir / "config.json", "w") as f:
-        json.dump(config, f, indent=2)
-
-    # SCPI class template
-    scpi_template = f'''"""
-{device_name.upper()} SCPI Control Module
-"""
-
-from typing import Dict, Any, Optional
-from ...core.scpi.common_scpi import CommonSCPI
-
-class {device_name.upper()}SCPI(CommonSCPI):
-    """{device_name.upper()}固有のSCPIコマンドラッパー"""
-
-    def __init__(self, connection):
-        super().__init__(connection)
-        self.logger.info("{device_name.upper()} SCPI wrapper initialized")
-
-    def measure(self) -> Dict[str, Any]:
-        """測定実行 - デバイス固有の実装が必要"""
-        # TODO: 実際のSCPIコマンドに置き換える
-        result = self.query("MEAS?")
-        return {{"value": result}}
-
-    # TODO: デバイス固有のメソッドを追加
-'''
-
-    (plugin_dir / f"{device_name}_scpi.py").write_text(scpi_template)
-```
-
 ---
 
 ## 🧪 テスト・デバッグ
+
+下記は人によるチェックがまだ終了していません
 
 ### テスト構造
 
