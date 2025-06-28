@@ -456,13 +456,12 @@ class CommonSCPI:
     def query(self, command: str) -> str:
         return self.query(command)
 
-    def ssend(self, command: str, safe: bool = True, timeout: float = 5.0, interval: float = 0.1) -> None:
+    def s_send(self, command: str, timeout: float = 5.0, interval: float = 0.1) -> None:
         """
-        SCPIコマンドを送信（エラー監視機能付き）
+        SCPIコマンドを送信（*OPC, *ESR?による完了・エラーチェック）
 
         Args:
             command: SCPIコマンド文字列
-            safe: エラー監視を行うか（*OPC, *ESR?による完了・エラーチェック）
             timeout: タイムアウト時間（秒）
             interval: ポーリング間隔（秒）
 
@@ -471,13 +470,12 @@ class CommonSCPI:
             TimeoutError: タイムアウトした場合
         """
 
-    def squery(self, command: str) -> str:
+    def s_query(self, command: str, timeout: float = 5.0, interval: float = 0.1) -> str:
         """
         SCPIクエリを実行（エラー監視機能付き）
 
         Args:
             command: SCPIクエリコマンド文字列
-            safe: エラー監視を行うか
             timeout: タイムアウト時間（秒）
             interval: ポーリング間隔（秒）
 

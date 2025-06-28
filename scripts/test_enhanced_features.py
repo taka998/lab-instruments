@@ -6,9 +6,7 @@ Lab Instruments Enhanced Features Integration Test
 
 import sys
 import os
-import tempfile
 import json
-from pathlib import Path
 from datetime import datetime
 
 # Add parent directory to path for running as script
@@ -176,7 +174,7 @@ def test_refresh_functionality():
     print("Performing plugin refresh...")
     refresh_result = lab_instruments.refresh_plugins()
     
-    print(f"✓ Refresh completed")
+    print("✓ Refresh completed")
     print(f"  Old devices: {len(refresh_result['old_devices'])}")
     print(f"  New devices: {len(refresh_result['new_devices'])}")
     print(f"  Added: {refresh_result['added_devices']}")
@@ -226,7 +224,7 @@ def test_monitoring_features():
     
     # Get comprehensive stats
     stats = lab_instruments.get_connection_stats()
-    print(f"✓ Connection statistics collected:")
+    print("✓ Connection statistics collected:")
     print(f"  Total: {stats['total_connections']}")
     print(f"  Successful: {stats['successful_connections']}")
     print(f"  Failed: {stats['failed_connections']}")
@@ -235,7 +233,7 @@ def test_monitoring_features():
     # Test registry stats
     registry_stats = lab_instruments.registry.get_discovery_stats()
     if registry_stats:
-        print(f"✓ Registry discovery stats:")
+        print("✓ Registry discovery stats:")
         print(f"  Attempted: {registry_stats.get('attempted', 0)}")
         print(f"  Successful: {registry_stats.get('successful', 0)}")
         print(f"  Duration: {registry_stats.get('duration', 0):.3f}s")
@@ -243,7 +241,7 @@ def test_monitoring_features():
     # Test stub stats
     stub_stats = lab_instruments.stub_manager.get_generation_stats()
     if stub_stats:
-        print(f"✓ Stub generation stats:")
+        print("✓ Stub generation stats:")
         print(f"  Success: {stub_stats.get('success', False)}")
         print(f"  Duration: {stub_stats.get('duration', 0):.3f}s")
         print(f"  File size: {stub_stats.get('stub_file_size', 0)} bytes")
@@ -282,7 +280,7 @@ def export_test_report():
         issues = len(diagnosis.get('issues', []))
         devices = len(lab_instruments.list_devices())
         
-        print(f"📋 Report Summary:")
+        print("📋 Report Summary:")
         print(f"  Devices: {devices}")
         print(f"  Issues: {issues}")
         print(f"  Total connections: {report['connection_statistics']['total_connections']}")

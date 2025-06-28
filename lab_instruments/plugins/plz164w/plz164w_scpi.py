@@ -5,27 +5,27 @@ class PLZ164WSCPI(CommonSCPI):
         super().__init__(connection)
 
     def load_on(self) -> None:
-        self.send("OUTP ON")
+        self.s_send("OUTP ON")
 
     def load_off(self) -> None:
-        self.send("OUTP OFF")
+        self.s_send("OUTP OFF")
 
     def set_voltage(self, voltage) -> None:
-        self.send(f"VOLT {voltage}")
+        self.s_send(f"VOLT {voltage}")
 
     def set_current(self, current) -> None:
-        self.send(f"CURR {current}")
+        self.s_send(f"CURR {current}")
 
     def set_over_power_protection(self, power) -> None:
-        self.send(f"POW:PROT {power}")
+        self.s_send(f"POW:PROT {power}")
 
     def get_voltage(self) -> float:
-        res = self.query("MEAS:VOLT?")
+        res = self.s_query("MEAS:VOLT?")
         return float(res)
 
     def get_current(self) -> float:
-        res = self.query("MEAS:CURR?")
+        res = self.s_query("MEAS:CURR?")
         return float(res)
     
     def local(self) -> None:
-        self.send("SYST:LOC")
+        self.s_send("SYST:LOC")

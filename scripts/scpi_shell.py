@@ -43,10 +43,10 @@ def main():
             if not cmd:
                 continue
             if cmd.endswith("?"):
-                res = scpi.query(cmd)
+                res = scpi.s_query(cmd)
                 print(res)
             else:
-                scpi.send(cmd)
+                scpi.s_send(cmd)
                 print("OK")
         except Exception as e:
             print(f"Error: {e}")

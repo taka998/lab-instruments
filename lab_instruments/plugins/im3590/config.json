@@ -11,5 +11,14 @@
     "port": 3590,
     "timeout": 1.0,
     "terminator": "CRLF"
+  },
+  "metadata": {
+    "manufacturer": "Hioki",
+    "model": "IM3590",
+    "description": "LCR Meter",
+    "version": "1.0",
+    "manual_url": "https://www.hioki.co.jp/j/products/lcr/application/IM3590/Japanese/index.htm",
+    "categories": ["LCR", "Impedance"],
+    "supported_interfaces": ["serial", "socket"]
   }
 }

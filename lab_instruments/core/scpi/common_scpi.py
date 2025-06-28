@@ -88,13 +88,22 @@ class CommonSCPI:
         """*WAI Wait-to-continue"""
         self.conn.write("*WAI")
 
-    def send(self, command, safe=True, timeout=5.0, interval=0.1):
+    # SCPI Comunication Func
+
+    def write(self, command: str) -> None:
+        self.conn.write(command)
+
+    def read(self) -> str:
+        return self.conn.read()
+
+    def query(self, command: str) -> str:
+        return self.query(command)
+
+    def s_send(self, command, timeout=5.0, interval=0.1):
         """
         Send a SCPI command. If safe=True, monitors completion and errors using *OPC and *ESR?.
         """
         self.conn.write(command)
-        if not safe:
-            return
         self.conn.write("*OPC")
         start = time.time()
         while True:
@@ -112,13 +121,11 @@ class CommonSCPI:
                     raise TimeoutError("SCPI command did not complete in time (OPC/ESR)")
             time.sleep(interval)
 
-    def query(self, command, safe=True, timeout=5.0, interval=0.1):
+    def s_query(self, command, timeout=5.0, interval=0.1):
         """
         Send a SCPI query command and get the response. If safe=True, monitors completion and errors using *OPC and *ESR?.
         """
         response = self.conn.query(command)
-        if not safe:
-            return
         self.conn.write("*OPC")
         start = time.time()
         while True:
