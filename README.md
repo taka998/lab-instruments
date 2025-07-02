@@ -1,6 +1,6 @@
 # lab-instruments
 
-# LCRメーター接続（自動型推論）
+# LCRメーター接続
 
 ```python
 with lab_instruments.connect(dev="im3590") as lcr:
@@ -107,11 +107,8 @@ python scripts/scpi_shell.py
 - **[使用例](examples/README.md)** - 実践的なコード例・サンプル
 - **[プラグイン開発ガイド](docs/PluginDevelopment.md)** - 新機器対応の追加方法
 - **[API リファレンス](docs/APIReference.md)** - 関数・クラスの詳細仕様
-- `pyvisa` - VISA通信
-- `pyserial` - シリアル通信
-- `numpy`, `pandas` - データ処理
-- `loguru` - ログ出力
+
 
 ---
 
-**2024年リファクタリング完了** - 統一ファクトリパターン + 完全型安全対応
+**2025年リファクタリング完了** - 統一ファクトリパターン + 完全型安全対応
